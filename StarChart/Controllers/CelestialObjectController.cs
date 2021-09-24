@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using StarChart.Data;
+using StarChart.Models;
 
 namespace StarChart.Controllers
 {
@@ -42,6 +43,58 @@ namespace StarChart.Controllers
             var celestials = _context.CelestialObjects.ToList();
             celestials.ForEach(x=>x.Satellites = celestials.Where(_=>_.OrbitedObjectId == x.Id).ToList());
             return Ok(celestials);
+        }
+
+        [HttpPost]
+        public IActionResult Create([FromBody] CelestialObject celestialObject)
+        {
+            _context.Add(celestialObject);
+            _context.SaveChanges();
+            return CreatedAtRoute("GetById", new {id = celestialObject.Id }, celestialObject);
+
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, CelestialObject celestialObject)
+        {
+            var celestialDb = _context.CelestialObjects.FirstOrDefault(x => x.Id == id);
+            if (celestialDb == null)
+                return NotFound();
+
+            celestialDb.Name = celestialObject.Name;
+            celestialDb.OrbitalPeriod = celestialObject.OrbitalPeriod;
+            celestialDb.OrbitedObjectId = celestialObject.OrbitedObjectId;
+            _context.Update(celestialDb);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+        
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var celestialDb = _context.CelestialObjects.Where(x => x.Id == id).ToList();
+            if (!celestialDb.Any())
+                return NotFound();
+            
+            _context.RemoveRange(celestialDb);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+        
+        [HttpPatch("{id}/{name}")]
+        public IActionResult RenameObject(int id, string name)
+        {
+            var celestialDb = _context.CelestialObjects.FirstOrDefault(x => x.Id == id);
+            if (celestialDb == null)
+                return NotFound();
+
+            celestialDb.Name = name;
+            _context.Update(celestialDb);
+            _context.SaveChanges();
+
+            return NoContent();
         }
     }
 }
